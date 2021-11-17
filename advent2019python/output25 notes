@@ -1,0 +1,26 @@
+- polygon   l
+- fixed point   l
+- astronaut ice cream   l
+- easter egg   l
+- dark matter  l
+- food ration    l
+- asterisk   x
+- weather machine   l
+
+
+polygon + fixed point l
+polygon + astronaut l
+polygon + easter egg l
+polygon + dm l
+p + fr l
+p + weather machine l
+
+fp + aic l
+fp + ee l
+fp + dm l
+fp + fr l
+fp + wm l
+
+aic + ee
+aic + dm
+aic + fm
