@@ -846,3 +846,55 @@ func compute(with language: [String: Operation], program: [[String]] = inputWord
 	
 }
 
+class IntcodeComputer: CustomStringConvertible {
+	let originalCode: [Int: Int]
+	var code: [Int: Int] = [:]
+	var current: Int
+	
+	init(program: [Int]) {
+		for (i, v) in program.enumerated() {
+			code[i] = v
+		}
+		originalCode = code
+		current = 0
+	}
+	
+	func reset() {
+		code = originalCode
+		current = 0
+	}
+	
+	func int(_ pos: Int) -> Int {
+		code[pos, default: 0]
+	}
+	
+	func getParameters() -> (Int, Int) {
+		(code[code[current + 1, default: 0], default: 0], code[code[current + 2, default: 0], default: 0])
+	}
+	
+	func step() {
+		let parameters = getParameters()
+		switch int(current) {
+		case 1: code[code[current + 3, default: 0]] = parameters.0 + parameters.1
+		case 2: code[code[current + 3, default: 0]] = parameters.0 * parameters.1
+		default: break
+		}
+		current += 4
+	}
+	
+	func runToEnd() {
+		current = 0
+		
+		while int(current) != 99 {
+			step()
+		}
+	}
+	
+	var description: String {
+		var string = ""
+		for i in (code.keys.min() ?? 0)...(code.keys.max() ?? 0) {
+			string += String(code[i, default: 0]) + ", "
+		}
+		return String(string.dropLast(2))
+	}
+}

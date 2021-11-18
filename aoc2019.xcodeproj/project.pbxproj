@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		1E0641822745E6F600E62D37 /* day02.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E0641812745E6F600E62D37 /* day02.swift */; };
 		1E5771F5274493790004AC21 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E5771F4274493790004AC21 /* main.swift */; };
 		1E5771FC274493B00004AC21 /* helpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E5771FB274493B00004AC21 /* helpers.swift */; };
 		1E5771FE274493D00004AC21 /* day01.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E5771FD274493D00004AC21 /* day01.swift */; };
@@ -25,6 +26,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		1E0641812745E6F600E62D37 /* day02.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = day02.swift; sourceTree = "<group>"; };
+		1E0641832745E6FF00E62D37 /* input02 */ = {isa = PBXFileReference; lastKnownFileType = text; path = input02; sourceTree = "<group>"; };
 		1E5771F1274493790004AC21 /* aoc2019 */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = aoc2019; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E5771F4274493790004AC21 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		1E5771FB274493B00004AC21 /* helpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = helpers.swift; sourceTree = "<group>"; };
@@ -65,7 +68,9 @@
 				1E5771F4274493790004AC21 /* main.swift */,
 				1E5771FB274493B00004AC21 /* helpers.swift */,
 				1E5771FD274493D00004AC21 /* day01.swift */,
+				1E0641812745E6F600E62D37 /* day02.swift */,
 				1E5771FF274493DC0004AC21 /* input01 */,
+				1E0641832745E6FF00E62D37 /* input02 */,
 			);
 			path = aoc2019;
 			sourceTree = "<group>";
@@ -130,6 +135,7 @@
 			files = (
 				1E5771F5274493790004AC21 /* main.swift in Sources */,
 				1E5771FC274493B00004AC21 /* helpers.swift in Sources */,
+				1E0641822745E6F600E62D37 /* day02.swift in Sources */,
 				1E5771FE274493D00004AC21 /* day01.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
