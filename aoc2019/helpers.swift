@@ -39,6 +39,11 @@ public func inputWords(_ wordSeparators: [String] = [" "], _ lineSeparator: Stri
 	return words
 }
 
+public func inputIntWords(_ wordSeparators: [String] = [" "], _ lineSeparator: String = "\n") -> [[Int]] {
+	let input = inputWords(wordSeparators, lineSeparator)
+	return input.map { words in words.map { word in Int(word)! } }
+}
+
 public func inputSomeInts(words: [Int], _ wordSeparators: [String] = [" "], _ lineSeparator: String = "\n") -> [[Int]] {
 	let input = inputWords(wordSeparators, lineSeparator)
 	return words.map { word in input.map { line in Int(line[word])! } }
@@ -174,7 +179,7 @@ public extension Array {
 		return self[index(startIndex, offsetBy: i % count)]
 	}
 	
-	subscript(s i: Int) -> Iterator.Element? {
+	subscript(guarded i: Int) -> Iterator.Element? {
 		if i < 0 || i >= count { return nil }
 		return self[i]
 	}
@@ -535,6 +540,20 @@ struct C2: Equatable, Hashable, AdditiveArithmetic {
 	init(_ x: Int, _ y: Int) {
 		self.x = x
 		self.y = y
+	}
+	
+	init(dir: Character) {
+		switch dir {
+		case "U": self.init(0, 1)
+		case "D": self.init(0, -1)
+		case "L": self.init(-1, 0)
+		case "R": self.init(1, 0)
+		case "N": self.init(0, 1)
+		case "S": self.init(0, -1)
+		case "W": self.init(-1, 0)
+		case "E": self.init(1, 0)
+		default: self.init(0, 0)
+		}
 	}
 	
 	static let zeroAdjacents = [(-1,0),(0,-1),(0,1),(1,0)]
