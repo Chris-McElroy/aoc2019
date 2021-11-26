@@ -891,39 +891,30 @@ class IntcodeComputer: CustomStringConvertible {
 		code[pos, default: 0]
 	}
 	
+	func getValue(_ i: Int, imm: Int) -> Int {
+		imm % 10 == 1 ? i : int(i)
+	}
+	
 	func getParameters() -> (Int, Int, Int, Int) {
 		var opcode = int(current)
-		var parameters = [opcode % 100]
+		var parameters = (opcode % 100, 0, 0, 0)
 		opcode /= 100
 		
-		if parameters[0] == 3 {
-			parameters.append(opcode % 10 == 1 ? current + 1 : int(current + 1))
-			parameters.append(0)
-			parameters.append(0)
-		} else if parameters[0] == 5 || parameters[0] == 6 {
-			parameters.append(opcode % 10 == 1 ? int(current + 1) : int(int(current + 1)))
-			opcode /= 10
-			parameters.append(opcode % 10 == 1 ? int(current + 2) : int(int(current + 2)))
-			parameters.append(0)
-		} else {
-			parameters.append(opcode % 10 == 1 ? int(current + 1) : int(int(current + 1)))
-			opcode /= 10
-			parameters.append(opcode % 10 == 1 ? int(current + 2) : int(int(current + 2)))
-			opcode /= 10
-			parameters.append(opcode % 10 == 1 ? current + 3 : int(current + 3))
-		}
+		parameters.1 = int(getValue(current + 1, imm: opcode))
+		opcode /= 10
+		parameters.2 = int(getValue(current + 2, imm: opcode))
+		opcode /= 10
+		parameters.3 = getValue(current + 3, imm: opcode)
 		
-		return parameters.toTuple()
+		return parameters
 	}
 	
 	func step() {
 		let parameters = getParameters()
-//		print(current, parameters)
-//		print(self)
 		switch parameters.0 {
 		case 1: code[parameters.3] = parameters.1 + parameters.2
 		case 2: code[parameters.3] = parameters.1 * parameters.2
-		case 3: code[parameters.1] = input()
+		case 3: code[int(current + 1)] = input() // assuming no 103s
 		case 4: output(parameters.1)
 		case 5: if parameters.1 != 0 { current = parameters.2 - 3 }
 		case 6: if parameters.1 == 0 { current = parameters.2 - 3 }
@@ -931,7 +922,6 @@ class IntcodeComputer: CustomStringConvertible {
 		case 8: code[parameters.3] = parameters.1 == parameters.2 ? 1 : 0
 		default: break
 		}
-//		print(parameters.0)
 		current += [1, 4, 4, 2, 2, 3, 3, 4, 4][parameters.0]
 	}
 	

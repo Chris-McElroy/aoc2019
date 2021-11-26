@@ -8,8 +8,11 @@
 import Foundation
 
 func d5() {
-	let computer = IntcodeComputer(program: inputInts(","), input: { 5 }, output: { print($0) })
+	let computer = IntcodeComputer(program: inputInts(","), input: { 1 }, output: { if $0 != 0 { print($0) } })
+	computer.runToEnd()
 	
+	computer.reset()
+	computer.input = { 5 }
 	computer.runToEnd()
 }
 
