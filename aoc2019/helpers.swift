@@ -869,13 +869,17 @@ class IntcodeComputer: CustomStringConvertible {
 	let originalCode: [Int: Int]
 	var code: [Int: Int] = [:]
 	var current: Int
+	var input: () -> Int
+	var output: (Int) -> Void
 	
-	init(program: [Int]) {
+	init(program: [Int], input: @escaping (() -> Int) = { 0 }, output: @escaping ((Int) -> Void) = { _ in }) {
 		for (i, v) in program.enumerated() {
 			code[i] = v
 		}
 		originalCode = code
 		current = 0
+		self.input = input
+		self.output = output
 	}
 	
 	func reset() {
@@ -887,18 +891,48 @@ class IntcodeComputer: CustomStringConvertible {
 		code[pos, default: 0]
 	}
 	
-	func getParameters() -> (Int, Int) {
-		(code[code[current + 1, default: 0], default: 0], code[code[current + 2, default: 0], default: 0])
+	func getParameters() -> (Int, Int, Int, Int) {
+		var opcode = int(current)
+		var parameters = [opcode % 100]
+		opcode /= 100
+		
+		if parameters[0] == 3 {
+			parameters.append(opcode % 10 == 1 ? current + 1 : int(current + 1))
+			parameters.append(0)
+			parameters.append(0)
+		} else if parameters[0] == 5 || parameters[0] == 6 {
+			parameters.append(opcode % 10 == 1 ? int(current + 1) : int(int(current + 1)))
+			opcode /= 10
+			parameters.append(opcode % 10 == 1 ? int(current + 2) : int(int(current + 2)))
+			parameters.append(0)
+		} else {
+			parameters.append(opcode % 10 == 1 ? int(current + 1) : int(int(current + 1)))
+			opcode /= 10
+			parameters.append(opcode % 10 == 1 ? int(current + 2) : int(int(current + 2)))
+			opcode /= 10
+			parameters.append(opcode % 10 == 1 ? current + 3 : int(current + 3))
+		}
+		
+		return parameters.toTuple()
 	}
 	
 	func step() {
 		let parameters = getParameters()
-		switch int(current) {
-		case 1: code[code[current + 3, default: 0]] = parameters.0 + parameters.1
-		case 2: code[code[current + 3, default: 0]] = parameters.0 * parameters.1
+//		print(current, parameters)
+//		print(self)
+		switch parameters.0 {
+		case 1: code[parameters.3] = parameters.1 + parameters.2
+		case 2: code[parameters.3] = parameters.1 * parameters.2
+		case 3: code[parameters.1] = input()
+		case 4: output(parameters.1)
+		case 5: if parameters.1 != 0 { current = parameters.2 - 3 }
+		case 6: if parameters.1 == 0 { current = parameters.2 - 3 }
+		case 7: code[parameters.3] = parameters.1 < parameters.2 ? 1 : 0
+		case 8: code[parameters.3] = parameters.1 == parameters.2 ? 1 : 0
 		default: break
 		}
-		current += 4
+//		print(parameters.0)
+		current += [1, 4, 4, 2, 2, 3, 3, 4, 4][parameters.0]
 	}
 	
 	func runToEnd() {
@@ -917,3 +951,6 @@ class IntcodeComputer: CustomStringConvertible {
 		return String(string.dropLast(2))
 	}
 }
+
+// 16434972
+//

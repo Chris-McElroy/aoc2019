@@ -8,7 +8,7 @@
 import Foundation
 
 func d4() {
-	let range = inputIntWords(["-"])[0]
+	let range = inputInts("-")
 	var working1 = 0
 	var working2 = 0
 	var n = range[0]
@@ -17,7 +17,7 @@ func d4() {
 		let digits = String(n).map { Int(String($0))! }
 		var mult = 11111
 		var mod = 100000
-		for i in 0...4 {
+		for i in 0..<5 {
 			if digits[i] > digits[i + 1] {
 				return n + (digits[i] * mult) - (n % mod)
 			}
