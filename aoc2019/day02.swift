@@ -8,7 +8,7 @@
 import Foundation
 
 func d2() {
-	let computer = IntcodeComputer(program: inputInts(","))
+	let computer = IntcodeComputer()
 	computer.code[1] = 12
 	computer.code[2] = 2
 	computer.runToEnd()

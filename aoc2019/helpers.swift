@@ -79,7 +79,47 @@ func make2DArray<Element>(repeating repeatedValue: Element, count1: Int, count2:
 	(0..<count1).map { _ in Array(repeating: repeatedValue, count: count2) }
 }
 
-public extension Collection where Indices.Iterator.Element == Index {
+public extension Collection {
+	func sum<N: AdditiveArithmetic>(_ partialResult: (Element) -> N) -> N {
+		self.reduce(.zero, { $0 + partialResult($1) })
+	}
+	
+	func count(where predicate: (Element) -> Bool) -> Int {
+		self.reduce(0, { $0 + predicate($1).int })
+	}
+	
+	func any(where predicate: (Element) -> Bool) -> Bool {
+		for e in self where predicate(e) { return true }
+		return false
+	}
+	
+	func all(where predicate: (Element) -> Bool) -> Bool {
+		for e in self where !predicate(e) { return false }
+		return true
+	}
+	
+	func map<T>(after predicate: (Element) -> Bool, _ transform: (Element) throws -> T) rethrows -> [T] {
+		var started: Bool = false
+		var newArray: [T] = []
+		for e in self {
+			if started {
+				newArray.append(try transform(e))
+			} else {
+				started = predicate(e)
+			}
+		}
+		return newArray
+	}
+	
+	func map<T>(while predicate: (Element) -> Bool, _ transform: (Element) throws -> T) rethrows -> [T] {
+		var newArray: [T] = []
+		for e in self {
+			if !predicate(e) { break }
+			newArray.append(try transform(e))
+		}
+		return newArray
+	}
+	
 	func first(_ k: Int) -> SubSequence {
 		return self.dropLast(count-k)
 	}
@@ -110,6 +150,10 @@ public extension Collection where Indices.Iterator.Element == Index {
 		return array
 	}
 	
+	func max(by value: (Element) -> Int) -> Element? {
+		self.max(by: { value($0) > value($1) })
+	}
+	
 	// from https://stackoverflow.com/a/54350570
 	func toTuple() -> (Element) {
 		return (self[0 as! Self.Index])
@@ -129,6 +173,18 @@ public extension Collection where Indices.Iterator.Element == Index {
 	
 	func toTuple() -> (Element, Element, Element, Element, Element) {
 		return (self[0 as! Self.Index], self[1 as! Self.Index], self[2 as! Self.Index], self[3 as! Self.Index], self[4 as! Self.Index])
+	}
+}
+
+public extension Collection where Element == Bool {
+	func any() -> Bool {
+		for e in self where e { return true }
+		return false
+	}
+	
+	func all() -> Bool {
+		for e in self where !e { return false }
+		return true
 	}
 }
 
@@ -153,6 +209,10 @@ public extension Collection where Element: Numeric {
 	
 	func sum() -> Element {
 		return self.reduce(0) { x,y in x+y }
+	}
+	
+	func sum(_ partialResult: (Element) -> Element) -> Element {
+		self.reduce(.zero, { $0 + partialResult($1) })
 	}
 }
 
@@ -190,6 +250,15 @@ public extension Array {
 	
 	func last(_ k: Int) -> Self.SubSequence {
 		return self.dropFirst(count-k)
+	}
+	
+	func chunk(by every: Int) -> [Self] {
+		var output: [Self] = []
+		for i in stride(from: 0, to: count/every, by: 1) {
+			let offset = i*every
+			output.append(Array(self.first(offset + every).dropFirst(offset)))
+		}
+		return output
 	}
 	
 	subscript(r: Range<Int>) -> Self.SubSequence {
@@ -447,17 +516,22 @@ extension RangeReplaceableCollection {
 		return dropFirst().uniqueCombinations(of: n - 1).map { CollectionOfOne(first) + $0 } + dropFirst().uniqueCombinations(of: n)
 	}
 	
+	func permutations() -> [Self] {
+		var all: [Self] = [self]
+		for i in stride(from: 0, to: count - 1, by: 1) {
+			for p in all {
+				var new = Array(p)
+				for j in stride(from: i + 1, to: count, by: 1) {
+					new.swapAt(i, j)
+					all.append(Self(new))
+				}
+			}
+		}
+		return all
+	}
+	
 	mutating func insert(_ newElement: Self.Element, _ i: Int) {
 		self.insert(newElement, at: index(self.startIndex, offsetBy: i))
-	}
-}
-
-// permutations from https://stackoverflow.com/questions/34968470/calculate-all-permutations-of-a-string-in-swift
-func permutations<T>(len n: Int, _ a: inout [T], output: inout [[T]]) {
-	if n == 1 { output.append(a); return }
-	for i in stride(from: 0, to: n, by: 1) {
-		permutations(len: n-1, &a, output: &output)
-		a.swapAt(n-1, (n%2 == 1) ? 0 : i)
 	}
 }
 
@@ -869,22 +943,23 @@ class IntcodeComputer: CustomStringConvertible {
 	let originalCode: [Int: Int]
 	var code: [Int: Int] = [:]
 	var current: Int
-	var input: () -> Int
-	var output: (Int) -> Void
+	var input: [Int]
+	var output: [Int] = []
 	
-	init(program: [Int], input: @escaping (() -> Int) = { 0 }, output: @escaping ((Int) -> Void) = { _ in }) {
+	init(program: [Int] = inputInts(","), input: [Int] = []) {
 		for (i, v) in program.enumerated() {
 			code[i] = v
 		}
 		originalCode = code
 		current = 0
 		self.input = input
-		self.output = output
 	}
 	
-	func reset() {
+	func reset(input: [Int] = []) {
 		code = originalCode
 		current = 0
+		self.input = input
+		output = []
 	}
 	
 	func int(_ pos: Int) -> Int {
@@ -895,42 +970,62 @@ class IntcodeComputer: CustomStringConvertible {
 		imm % 10 == 1 ? i : int(i)
 	}
 	
-	func getParameters() -> (Int, Int, Int, Int) {
+	struct Params {
+		let opCode: Int
+		var p1: Int
+		var p2: Int
+		var p3: Int
+	}
+	
+	func getParameters() -> Params {
 		var opcode = int(current)
-		var parameters = (opcode % 100, 0, 0, 0)
+		var parameters = Params(opCode: opcode % 100, p1: 0, p2: 0, p3: 0)
 		opcode /= 100
 		
-		parameters.1 = int(getValue(current + 1, imm: opcode))
+		parameters.p1 = int(getValue(current + 1, imm: opcode))
 		opcode /= 10
-		parameters.2 = int(getValue(current + 2, imm: opcode))
+		parameters.p2 = int(getValue(current + 2, imm: opcode))
 		opcode /= 10
-		parameters.3 = getValue(current + 3, imm: opcode)
+		parameters.p3 = getValue(current + 3, imm: opcode)
 		
 		return parameters
 	}
 	
-	func step() {
-		let parameters = getParameters()
-		switch parameters.0 {
-		case 1: code[parameters.3] = parameters.1 + parameters.2
-		case 2: code[parameters.3] = parameters.1 * parameters.2
-		case 3: code[int(current + 1)] = input() // assuming no 103s
-		case 4: output(parameters.1)
-		case 5: if parameters.1 != 0 { current = parameters.2 - 3 }
-		case 6: if parameters.1 == 0 { current = parameters.2 - 3 }
-		case 7: code[parameters.3] = parameters.1 < parameters.2 ? 1 : 0
-		case 8: code[parameters.3] = parameters.1 == parameters.2 ? 1 : 0
+	func step(_ params: Params) {
+		switch params.opCode {
+		case 1: code[params.p3] = params.p1 + params.p2
+		case 2: code[params.p3] = params.p1 * params.p2
+		case 3: code[int(current + 1)] = input.removeFirst() // assuming no 103s
+		case 4: output.append(params.p1)
+		case 5: if params.p1 != 0 { current = params.p2 - 3 }
+		case 6: if params.p1 == 0 { current = params.p2 - 3 }
+		case 7: code[params.p3] = params.p1 < params.p2 ? 1 : 0
+		case 8: code[params.p3] = params.p1 == params.p2 ? 1 : 0
 		default: break
 		}
-		current += [1, 4, 4, 2, 2, 3, 3, 4, 4][parameters.0]
+		current += [1, 4, 4, 2, 2, 3, 3, 4, 4][params.opCode]
 	}
 	
 	func runToEnd() {
-		current = 0
+		var params = getParameters()
 		
-		while int(current) != 99 {
-			step()
+		while params.opCode != 99 {
+			step(params)
+			params = getParameters()
 		}
+	}
+	
+	/// returns true if a new output was recieved
+	func runToOutput() -> Bool {
+		var params = getParameters()
+		
+		while params.opCode != 99 {
+			step(params)
+			if params.opCode == 4 { return true }
+			params = getParameters()
+		}
+		
+		return false
 	}
 	
 	var description: String {
